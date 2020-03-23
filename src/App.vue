@@ -1,28 +1,52 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-  </div>
+  <v-app>
+    <v-content>
+      <div v-if="isLoadingError">
+        <v-alert :value="true" color="error" icon="warning" outline>
+          Data loading failed. You can try one more time:
+          <v-btn small outline color="info" @click="getData()">
+            Try
+          </v-btn>
+        </v-alert>
+      </div>
+      <div v-else>
+        <TableUi v-if="loading" :desserts="products" />
+        <div class="text-center" v-else>
+          <v-progress-circular
+            :size="100"
+            color="primary"
+            indeterminate
+          ></v-progress-circular>
+          <h2 color="primary">loading data...</h2>
+        </div>
+      </div>
+    </v-content>
+  </v-app>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
-
+import TableUi from './components/Table-ui';
+import { mapState, mapActions } from 'vuex';
 export default {
   name: 'App',
   components: {
-    HelloWorld
-  }
-}
+    TableUi,
+  },
+  data: () => ({}),
+  computed: {
+    ...mapState(['loading', 'isLoadingError', 'products']),
+  },
+  methods: {
+    ...mapActions(['getData']),
+  },
+  mounted: function() {
+    this.getData();
+  },
+};
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+.v-progress-circular {
+  margin-top: 10%;
 }
 </style>
