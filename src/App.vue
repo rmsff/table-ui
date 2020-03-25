@@ -45,9 +45,13 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss" scoped>
 #app {
   background-color: #f2f2f2;
+  .container {
+    max-width: 1300px !important;
+    padding: 20px;
+  }
 }
 .v-progress-circular {
   margin-top: 10%;

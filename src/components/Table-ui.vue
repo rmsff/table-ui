@@ -56,7 +56,7 @@
         </v-menu>
       </v-layout>
 
-      <v-layout justify-start>
+      <v-layout justify-start class="pagination">
         <v-row class="ma-0 pa-0" align="center">
           <v-col class="ma-0 pa-0">
             <v-select
@@ -98,7 +98,7 @@
         </v-row>
       </v-layout>
 
-      <v-flex id="lesectcolumnsid">
+      <v-layout justify-start id="selectcolumnsid">
         <v-select
           v-model="selected"
           :items="headersWithoutLastItem"
@@ -123,7 +123,7 @@
             <span v-if="index === 0">{{ selected.length }} columns selected </span>
           </template>
         </v-select>
-      </v-flex>
+      </v-layout>
     </v-layout>
 
     <v-data-table
@@ -140,6 +140,7 @@
     >
       <template v-slot:item="props">
         <tr
+          :class="`table-row table-row_${props.index % 2 === 1 ? 'gray' : 'white'}`"
           :style="
             props.index % 2 === 1
               ? 'background-color: #F8F9FA'
@@ -349,15 +350,21 @@ export default {
 </script>
 
 <style  lang="sass" scoped>
+.row
+  margin: 0
+
+.control-panel
+  margin: 10px 0 10px 0
+
 #sorting-by-text
   display: flex
   align-items: center
 
-#lesectcolumnsid
-  div.v-input
-    width: 200px
+#selectcolumnsid
+  width: 200px
+  margin-left: 10px
+  .v-input
     height: 32px !important
-
     border-radius: 2px
     border: 1px solid #D5DAE0
     font-size: 14px !important
@@ -372,8 +379,6 @@ export default {
 .v-input--selection-controls
   margin: 0 !important
 
-// .mytable .v-table tbody tr:not(:last-child)
-//   border-bottom: none !important
 .pagination__button
   width: 32px !important
   height: 32px !important
@@ -401,6 +406,9 @@ export default {
 .button_heigth32
   height: 32px !important
   border-radius: 2px
+
+.table-row:hover
+  background-color: rgba(0, 161, 30, 0.07) !important
 
 .hideButton
   visibility: hidden
