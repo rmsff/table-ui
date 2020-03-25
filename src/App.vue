@@ -10,7 +10,7 @@
         </v-alert>
       </div>
       <div v-else>
-        <TableUi v-if="loading" :desserts="products" />
+        <TableUi v-if="isLoading" :items="items" />
         <div class="text-center" v-else>
           <v-progress-circular
             :size="100"
@@ -34,7 +34,7 @@ export default {
   },
   data: () => ({}),
   computed: {
-    ...mapState(['loading', 'isLoadingError', 'products']),
+    ...mapState(['isLoading', 'isLoadingError', 'items']),
   },
   methods: {
     ...mapActions(['getData']),
@@ -46,6 +46,9 @@ export default {
 </script>
 
 <style>
+#app {
+  background-color: #f2f2f2;
+}
 .v-progress-circular {
   margin-top: 10%;
 }

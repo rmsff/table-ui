@@ -3,39 +3,38 @@
   <v-container>
     <h1>Table UI</h1>
     <hr id="hr" />
-    <v-layout row wrap align-center justify-start>
-      <b>Group by: </b>
+    <v-layout row wrap align-center justify-start class="control-panel">
       <v-layout justify-start row wrap>
+        <div id="sorting-by-text"><b>Sorting by:</b></div>
         <v-flex v-for="(item, index) in headersData" :key="item.text + index" shrink>
           <v-btn
-            class="text-none pa-1 ml-1"
-            :color="selected[0] !== item.value ? 'white' : 'primary'"
+            class="text-none pa-1 ml-1 button_heigth32"
+            :color="selected[0] !== item.value ? '#f2f2f2' : 'primary'"
             small
             :elevation="0"
             align-self-start
             v-if="item.text !== ''"
-            @click="sortBy(item)"
+            @click="sortByColumns(item)"
           >
             <span class="font-weight-light">{{ item.text }}</span>
           </v-btn>
         </v-flex>
       </v-layout>
-      <v-spacer></v-spacer>
 
       <v-layout justify-start>
         <v-menu>
           <template v-slot:activator="{ on }">
             <v-btn
+              class="button_heigth32"
               style="text-transform: none"
               small
               color="primary"
               v-on="on"
               :disabled="selectedCheckbox.length === 0"
-            >
-              Delete &zwnj;
+              >Delete &zwnj;
               <span v-if="selectedCheckbox.length > 0">
-                ({{ selectedCheckbox.length }})</span
-              >
+                ({{ selectedCheckbox.length }})
+              </span>
             </v-btn>
           </template>
           <v-card>
@@ -50,13 +49,54 @@
               <v-spacer></v-spacer>
               <v-btn>Cancel</v-btn>
               <v-btn color="primary" @click="handleRemoveSelected({ selectedCheckbox })"
-                >Confirm</v-btn
-              >
+                >Confirm
+              </v-btn>
             </v-card-actions>
           </v-card>
         </v-menu>
       </v-layout>
-      <v-spacer></v-spacer>
+
+      <v-layout justify-start>
+        <v-row class="ma-0 pa-0" align="center">
+          <v-col class="ma-0 pa-0">
+            <v-select
+              class="ma-0 pa-0 pagination__selector"
+              v-model="itemsPerPage"
+              :items="itemsPerPageArray"
+              item-text="title"
+              item-value="value"
+              :rounded="true"
+              color="primary"
+              hide-details
+              dense
+            />
+          </v-col>
+
+          <v-btn
+            :disabled="page === 1"
+            small
+            :elevation="0"
+            class="text-none pagination__button"
+            @click="formerPage"
+            ><v-icon>mdi-chevron-left</v-icon>
+          </v-btn>
+
+          <span class="pagination__text">
+            {{ countRecordsPage.first }}-{{ countRecordsPage.last }} of
+            {{ countRecordsPage.total }}
+          </span>
+
+          <v-btn
+            :disabled="numberOfPages === page"
+            small
+            :elevation="0"
+            class="text-none pagination__button"
+            @click="nextPage"
+          >
+            <v-icon>mdi-chevron-right</v-icon>
+          </v-btn>
+        </v-row>
+      </v-layout>
 
       <v-flex id="lesectcolumnsid">
         <v-select
@@ -88,15 +128,24 @@
 
     <v-data-table
       :headers="selectedObj"
-      :items="desserts"
-      show-select
+      :items="items"
+      :items-per-page.sync="itemsPerPage"
+      :page="page"
+      :custom-sort="customSortRows"
+      :elevation="0"
       v-model="selectedCheckbox"
+      show-select
       item-key="id"
       hide-default-footer
-      :elevation="0"
     >
       <template v-slot:item="props">
-        <tr>
+        <tr
+          :style="
+            props.index % 2 === 1
+              ? 'background-color: #F8F9FA'
+              : 'background-color: #ffffff'
+          "
+        >
           <td>
             <v-checkbox
               v-model="selectedCheckbox"
@@ -115,7 +164,7 @@
           <td>
             <v-menu>
               <template v-slot:activator="{ on }">
-                <v-btn small color="primary" class="text-none hideButton" v-on="on">
+                <v-btn small text class="text-none hideButton" v-on="on" :elevation="0">
                   delete
                 </v-btn>
               </template>
@@ -156,17 +205,24 @@
 import { mapActions, mapMutations, mapState } from 'vuex';
 export default {
   props: {
-    desserts: {
+    items: {
       type: Array,
       default: () => [],
     },
   },
   data: () => ({
+    page: 1,
+    itemsPerPage: 10,
+    itemsPerPageArray: [
+      { title: '10 Per Page', value: 10 },
+      { title: '15 Per Page', value: 15 },
+      { title: '20 Per Page', value: 20 },
+    ],
     selectedCheckbox: [],
-    errorSnackbar: false, // tag to show snackBar
+    errorSnackbar: false,
     headersData: [
       {
-        text: 'Dessert (100g serving)',
+        text: 'Product (100g serving)',
         align: 'left',
         value: 'product',
       },
@@ -176,31 +232,39 @@ export default {
       { text: 'Protein (g)', value: 'protein' },
       { text: 'Iron (%)', value: 'iron' },
       { text: '', value: '', sortable: false },
-    ], // default headers data with parameters
-    selected: ['product', 'calories', 'fat', 'carbs', 'protein', 'iron'], // selected headers data (which is shown)
+    ],
+    selected: ['product', 'calories', 'fat', 'carbs', 'protein', 'iron'],
   }),
   computed: {
     ...mapState(['isErrorRemoved']),
-    // isErrorRemoved - boolean from Vuex which sets to TRUE if deleting error
     selectedObj: function() {
-      // make an arr from Objects from filtered headers arr
       return this.filterHeaders();
     },
     headersWithoutLastItem: function() {
-      // headers without last item - '' (which contains delete button)
       return this.headersData.slice(0, this.headersData.length - 1);
     },
     selectIcon() {
       return this.selected.length < 6
-        ? 'mdi-checkbox-blank-outline'
+        ? 'mdi-checkbox-blank-outlined'
         : 'mdi-checkbox-marked';
+    },
+    numberOfPages() {
+      return Math.ceil(this.items.length / this.itemsPerPage);
+    },
+    countRecordsPage() {
+      const { itemsPerPage, page, items } = this;
+      const total = items.length;
+      const tempFirst = itemsPerPage * page - itemsPerPage + 1;
+      const first = tempFirst > total ? total : tempFirst;
+      const tampLast = itemsPerPage * page;
+      const last = total > tampLast ? tampLast : tampLast - (tampLast - total);
+      return { first, last, total };
     },
   },
   methods: {
-    ...mapActions(['deleteProduct']),
+    ...mapActions(['deleteItems']),
     ...mapMutations(['setDeletingError']),
     filterHeaders: function() {
-      // filter headers Arr of Objects the same as sorted Arr
       let selectedHeadersWithDeleteColumn = this.selected.concat(['']);
       let filteredArrofObj = [];
       for (let i = 0; i < selectedHeadersWithDeleteColumn.length; i++) {
@@ -213,24 +277,32 @@ export default {
       return filteredArrofObj;
     },
     selectAll() {
-      // select all columns
       if (this.selected.length < this.headersWithoutLastItem.length) {
-        let headerNamesArr = this.headersWithoutLastItem.map(function(item) {
-          return item.value;
-        });
+        let headerNamesArr = this.headersWithoutLastItem.map(({ value }) => value);
         this.selected = headerNamesArr.slice();
       } else {
         this.selected = [];
       }
     },
-    sortBy(item) {
+    sortByColumns(item) {
       let index = this.selected.indexOf(item.value);
       if (index === -1) return;
       let deletedElem = this.selected.splice(index, 1);
       this.selected.unshift(deletedElem[0]);
     },
-    handleSelectItem(newSelectedCheckboxSingle) {
-      this.selectedCheckboxSingle = newSelectedCheckboxSingle;
+    customSortRows(items, index, isDesc) {
+      items.sort((a, b) => {
+        if (typeof a[index] === 'string') {
+          return !isDesc[0]
+            ? a[index].toLowerCase().localeCompare(b[index].toLowerCase())
+            : b[index].toLowerCase().localeCompare(a[index].toLowerCase());
+        }
+        if (typeof a[index] === 'number') {
+          return !isDesc[0] ? b[index] - a[index] : a[index] - b[index];
+        }
+      });
+      this.selectedCheckbox = [];
+      return items;
     },
     handleRemoveSelected({ props, selectedCheckbox }) {
       const callback = () => {
@@ -241,7 +313,13 @@ export default {
           );
         }
       };
-      this.deleteProduct({ payload: selectedCheckbox || props.item, callback });
+      this.deleteItems({ payload: selectedCheckbox || props.item, callback });
+    },
+    nextPage() {
+      if (this.page + 1 <= this.numberOfPages) this.page += 1;
+    },
+    formerPage() {
+      if (this.page - 1 >= 1) this.page -= 1;
     },
   },
   watch: {
@@ -251,15 +329,35 @@ export default {
     errorSnackbar: function() {
       this.setDeletingError(false);
     },
+    itemsPerPage() {
+      const { page, numberOfPages } = this;
+      if (page > numberOfPages) this.page = numberOfPages;
+      this.selectedCheckbox = [];
+    },
+    page() {
+      this.selectedCheckbox = [];
+    },
+    selected() {
+      this.selectedCheckbox = [];
+    },
+    selectedCheckbox(value) {
+      //if (toString.call(value) !== '[object Array]');
+      console.log(toString.call(value));
+    },
   },
 };
 </script>
 
 <style  lang="sass" scoped>
+#sorting-by-text
+  display: flex
+  align-items: center
+
 #lesectcolumnsid
-  width: 115px
-  height: 32px
   div.v-input
+    width: 200px
+    height: 32px !important
+
     border-radius: 2px
     border: 1px solid #D5DAE0
     font-size: 14px !important
@@ -274,8 +372,35 @@ export default {
 .v-input--selection-controls
   margin: 0 !important
 
-.mytable .v-table tbody tr:not(:last-child)
-  border-bottom: none !important
+// .mytable .v-table tbody tr:not(:last-child)
+//   border-bottom: none !important
+.pagination__button
+  width: 32px !important
+  height: 32px !important
+  padding: 0 !important
+  min-width: 1px !important
+  background-color: #ffffff
+  color: #5B5E77 !important
+  border: 1px solid #D5DAE0 !important
+  border-radius: 2px !important
+
+.pagination__text
+  font-weight: 600
+  font-size: 14px
+  line-height: 24px
+  color: #3D374A
+  margin: 0 8px 0 8px
+
+.pagination__selector
+  height: 32px
+  font-size: 14px
+  border: 1px solid #D5DAE0
+  border-radius: 2px
+  max-width: 170px
+
+.button_heigth32
+  height: 32px !important
+  border-radius: 2px
 
 .hideButton
   visibility: hidden

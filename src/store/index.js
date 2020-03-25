@@ -6,23 +6,23 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
-    products: [],
-    loading: false,
+    items: [],
+    isLoading: false,
     isLoadingError: false,
     isErrorRemoved: false,
   },
   mutations: {
-    setProducts(state, payload) {
-      state.products = payload;
+    setItems(state, payload) {
+      state.items = payload;
     },
     setError(state, payload) {
       state.isLoadingError = payload;
     },
-    setloading(state, payload) {
-      state.loading = payload;
+    setIsLoading(state, payload) {
+      state.isLoading = payload;
     },
-    deleteProduct(state, payload) {
-      state.products.splice(payload, 1);
+    deleteItem(state, payload) {
+      state.items.splice(payload, 1);
     },
     setDeletingError(state, payload) {
       state.isErrorRemoved = payload;
@@ -32,33 +32,33 @@ export default new Vuex.Store({
     getData({ commit }) {
       getProducts()
         .then((success) => {
-          commit('setProducts', success);
-          commit('setloading', true);
+          commit('setItems', success);
+          commit('setIsLoading', true);
           commit('setError', false);
         })
         .catch(() => {
           commit('setError', true);
-          commit('setloading', true);
+          commit('setIsLoading', true);
         });
     },
-    deleteProduct({ commit, state }, data) {
+    deleteItem({ commit, state }, data) {
       const { payload, callback } = data;
       deleteProducts()
         .then(() => {
           callback();
           if (toString.call(payload) === '[object Array]') {
             for (let i = 0; i < payload.length; i++) {
-              for (let j = 0; j < state.products.length; j++) {
-                if (state.products[j].id === payload[i].id) {
-                  commit('deleteProduct', j);
+              for (let j = 0; j < state.items.length; j++) {
+                if (state.items[j].id === payload[i].id) {
+                  commit('deleteItem', j);
                 }
               }
             }
           }
           if (toString.call(payload) === '[object Object]') {
-            for (let j = 0; j < state.products.length; j++) {
-              if (state.products[j].id === payload.id) {
-                commit('deleteProduct', j);
+            for (let j = 0; j < state.items.length; j++) {
+              if (state.items[j].id === payload.id) {
+                commit('deleteItem', j);
               }
             }
           }
